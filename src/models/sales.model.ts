@@ -12,7 +12,7 @@ const SalesSchema = new Schema<ISales>(
   {
     amount: { type: Number, required: true },
     status: { type: String, required: true, unique: true, enum: ["activo", "pendiente", "imcompleto", "disputada", "completado"] },
-    customerId: { type: Schema.Types.ObjectId, ref: "Sales", required: true },
+    customerId: { type: Schema.Types.ObjectId, ref: "Customer", required: true },
   },
   { timestamps: true }
 );

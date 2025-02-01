@@ -6,6 +6,7 @@ const saleController = new SaleController();
 
 router.post("/", saleController.createSale.bind(saleController));
 router.get("/:saleId", saleController.getSaleById.bind(saleController));
+router.get("/", saleController.getAllSales.bind(saleController));
 router.put("/:saleId", saleController.updateSale.bind(saleController));
 router.delete("/:saleId", saleController.deleteSale.bind(saleController));
 

@@ -1,10 +1,12 @@
 import { BaseService } from "./base.service";
 import SalesModel, { ISales } from "../models/sales.model";
 import CustomerModel from "../models/customer.model";
+import PayoutModel from "../models/payouts.model";
 
 export class SalesService extends BaseService {
   private SalesRepo = SalesModel;
   private CustomerRepo = CustomerModel;
+  private PayoutRepo = PayoutModel;
 
   /**
    * Crea una nueva venta dentro de una transacción.
@@ -32,18 +34,40 @@ export class SalesService extends BaseService {
   }
 
   /**
-   * Obtiene una venta por su ID.
+   * Obtiene una venta por su ID con el cliente y los pagos realizados.
    * @param saleId - ID de la venta.
-   * @returns La venta encontrada o error si no existe.
+   * @returns La venta encontrada con customer y payouts.
    */
-  async getSaleById(saleId: string): Promise<ISales> {
-    const sale = await this.SalesRepo.findById(saleId).exec();
+  async getSaleById(saleId: string) {
+    const sale = await this.SalesRepo.findById(saleId)
+      .populate("customerId")
+      .lean()
+      .exec();
+  
     if (!sale) {
       throw new Error("Sale not found");
     }
-    return sale;
-  }
+  
+    // Buscar los pagos relacionados con la venta
+    const payouts = await this.PayoutRepo.find({ saleId }).lean().exec();
 
+    const { customerId, ...rest } = sale;
+    return { ...rest, customer: customerId, payouts };
+  }
+  
+
+/**
+ * Obtiene todas las ventas.
+ * @returns Lista de ventas.
+ */
+async getAllSales(): Promise<Partial<ISales>[]> {
+  const sales = await this.SalesRepo.find().populate("customerId").lean().exec();
+
+  return sales.map(({ customerId, ...rest }) => ({
+    ...rest,
+    customer: customerId,
+  }));
+}
   /**
    * Actualiza una venta por su ID dentro de una transacción.
    * @param saleId - ID de la venta.

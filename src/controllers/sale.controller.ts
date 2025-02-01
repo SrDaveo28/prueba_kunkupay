@@ -30,6 +30,15 @@ export class SaleController {
     }
   }
 
+  async getAllSales(_req: Request, res: Response): Promise<void> {
+    try {
+      const adjustments = await this.salesService.getAllSales();
+      res.status(200).json(adjustments);
+    } catch (error) {
+      res.status(500).json({ message: error });
+    }
+  }
+
   async updateSale(req: Request, res: Response): Promise<void> {
     const saleId = req.params.saleId;
     const updateData = req.body;

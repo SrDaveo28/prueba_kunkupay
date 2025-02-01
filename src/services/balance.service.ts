@@ -9,16 +9,17 @@ export class BalanceService extends BaseService {
   private AdjustmentsRepo = AdjustmentsModel;
 
   /* Sobre los puntos hablados en la entrevista: 
-  El servicio BalanceService calcula el balance final de un cliente sumando las ventas, 
-  restando los pagos y sumando los ajustes, utilizando consultas paralelas 
-  para mejorar la eficiencia. 
-  Se recomienda una combinación de persistencia y lógica dinámica para asegurar 
-  que el balance refleje el estado actualizado de las transacciones. 
-  Además, el historial de movimientos se presenta combinando ventas, 
-  pagos y ajustes, con detalles relevantes como monto, estado y fecha, 
-  lo que facilita el análisis financiero. 
-  Implementar filtros y paginación en el historial puede mejorar la usabilidad, 
-  especialmente para clientes con un historial extenso.
+  Este código implementa dos funciones clave para gestionar el balance financiero de un cliente 
+  y su historial de transacciones. 
+  calculateBalance obtiene todas las ventas de un cliente, sus pagos asociados
+  y los ajustes generales, sumando los montos para calcular un balance dinámico 
+  sin necesidad de persistencia adicional, lo que asegura que los datos reflejen 
+  el estado actual en tiempo real. Este enfoque es eficiente porque 
+  evita inconsistencias por registros desactualizados, 
+  getTransactionHistory construye un historial de transacciones combinando ventas,
+  pagos y ajustes en una sola lista ordenada por fecha, lo que permite una visión clara y estructurada de la 
+  actividad del cliente. Para garantizar la integridad de los datos, la consulta se maneja 
+  con promesas concurrentes (Promise.all), mejorando el rendimiento y reduciendo bloqueos en la base de datos.
   */
 
   /**
@@ -40,7 +41,9 @@ export class BalanceService extends BaseService {
       const payoutsPromise = salesPromise.then((sales) =>
         this.PayoutsRepo.find({
           saleId: { $in: sales.map((sale) => sale._id) },
-        }).lean().exec()
+        })
+          .lean()
+          .exec()
       );
 
       // Obtener los ajustes (pueden ser específicos o generales)
@@ -54,8 +57,14 @@ export class BalanceService extends BaseService {
 
       // Calcular la suma de ventas, pagos y ajustes
       const totalSales = sales.reduce((acc, sale) => acc + sale.amount, 0);
-      const totalPayouts = payouts.reduce((acc, payout) => acc + payout.amount, 0);
-      const totalAdjustments = adjustments.reduce((acc, adjustment) => acc + adjustment.amount, 0);
+      const totalPayouts = payouts.reduce(
+        (acc, payout) => acc + payout.amount,
+        0
+      );
+      const totalAdjustments = adjustments.reduce(
+        (acc, adjustment) => acc + adjustment.amount,
+        0
+      );
 
       // Calcular el balance final
       const balance = totalSales - totalPayouts + totalAdjustments;
@@ -84,7 +93,9 @@ export class BalanceService extends BaseService {
       const payoutsPromise = salesPromise.then((sales) =>
         this.PayoutsRepo.find({
           saleId: { $in: sales.map((sale) => sale._id) },
-        }).lean().exec()
+        })
+          .lean()
+          .exec()
       );
 
       // Obtener los ajustes (pueden ser específicos o generales)
